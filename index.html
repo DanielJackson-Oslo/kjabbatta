@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kjabbatta</title>
+    <style>
+        html {
+            margin: 0;
+        }
+        body {
+            margin: 0;
+            padding: 2vh;
+            height: 96vh;
+            display: flex;
+            flex-direction: column;
+            background: linear-gradient(rgb(50,30,30), rgb(60,40,40));
+            text-align: center;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+            color: white;
+        }
+        h1 {
+            font-weight: 100;
+            letter-spacing: 2px;
+        }
+        #board {
+            flex: 1;
+            background-repeat: no-repeat;
+            background-color: rgb(200,180,180);
+            background-size: 100% 100%;
+            background-image: radial-gradient(at 0 0, rgb(120,90,90) 0%, rgb(200,180,180) 100%);
+            border-radius: 1em;
+            box-shadow: inset 1px 2px 4px 1px rgba(0,0,0,0.1);
+            position: relative;
+            overflow: hidden;
+        }
+        .clickable {
+            transition: background-color 0.05s ease-in-out,
+                width 0.5s ease-in-out,
+                height 0.5s ease-in-out;
+            width: 40px;
+            height: 40px;
+            background-color: white;
+            border-radius: 100%;
+            box-shadow: 1px 2px 4px 1px rgba(0,0,0,0.1), 0px 0px 400px 100px rgb(90,60,60), 0px 0px 200px 50px rgb(90,60,60);
+            position: absolute;
+            top: 4px;
+            left: 4px;
+            transform: translate(0, 0);
+            overflow: hidden;
+        }
+        .clickable img {
+            transition: opacity 0.5s ease-in-out;
+            width: 100%;
+            height: 100%;
+            position: absolute;
+            top: 0;
+            left: 0;
+            object-fit: cover;
+            opacity: 0;
+            user-drag: none;
+            -webkit-user-drag: none;
+            user-select: none;
+            -moz-user-select: none;
+            -webkit-user-select: none;
+            -ms-user-select: none;
+        }
+        .clickable:hover {
+            background-color: pink;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+    <h1>Vi spiller: Kjabba, ciabatta eller kjabbatta?</h1>
+    <div id="board"></div>
+    <script type="text/javascript">
+        const CIRCLEWIDTH = 40
+        const EXPANDED_CIRCLE_WIDTH = 180
+        const PADDING = 4
+        const TRANSITIONLENGTH = 1
+
+        function whichTransitionEvent(){
+            var t;
+            var el = document.createElement('fakeelement');
+            var transitions = {
+            'transition':'transitionend',
+            'OTransition':'oTransitionEnd',
+            'MozTransition':'transitionend',
+            'WebkitTransition':'webkitTransitionEnd'
+            }
+
+            for(t in transitions){
+                if( el.style[t] !== undefined ){
+                    return transitions[t];
+                }
+            }
+        }
+        const TRANSITION_ENDS_EVENT = whichTransitionEvent();
+
+
+        const board = document.getElementById("board")
+        const clickable = document.createElement("DIV")
+        clickable.classList.add("clickable")
+        const ciabatta = document.createElement("img")
+        ciabatta.src = "ciabatta.jpg"
+        const kjabba = document.createElement("img")
+        kjabba.src = "kjabba.jpg"
+        const kjabbatta = document.createElement("img")
+        kjabbatta.src = "kjabbatta.jpg"
+        
+        const setImage = (node) => {
+            const terning = Math.random()
+            while(node.firstChild) {
+                node.removeChild(node.firstChild);
+            }
+            if (terning > 0.4) {
+                node.appendChild(ciabatta)
+            } else if (terning < 0.3)  {
+                node.appendChild(kjabba)
+            } else {
+                node.appendChild(kjabbatta)
+            }
+        }
+
+        board.appendChild(clickable)
+
+        const newPosition = (node) => {
+            const boardBounds = board.getBoundingClientRect()
+            const x = Math.max(CIRCLEWIDTH + PADDING * 2, boardBounds.width * Math.random() - EXPANDED_CIRCLE_WIDTH - PADDING * 2)
+            const y = Math.max(CIRCLEWIDTH + PADDING * 2, boardBounds.height * Math.random() - EXPANDED_CIRCLE_WIDTH - PADDING * 2)
+            node.style.transition = `background-color 0.05s ease-in-out,
+                width 0.5s ease-in-out,
+                height 0.5s ease-in-out, transform ${TRANSITIONLENGTH}s ease-in-out`;
+            node.style.transform = `translate(${x}px, ${y}px)`
+            
+        }
+
+        const moveClickable = () => {
+            newPosition(clickable)
+        } 
+        clickable.addEventListener(TRANSITION_ENDS_EVENT, moveClickable)
+
+        const stopNode = (node) => {
+            node.removeEventListener(TRANSITION_ENDS_EVENT, moveClickable)
+            node.style.transform = getComputedStyle(node).transform
+        }
+        
+        const startNode = (node) => {
+            clickable.addEventListener(TRANSITION_ENDS_EVENT, moveClickable)
+            newPosition(node)
+        }
+
+        const showImage = (node) => {
+            setImage(node)
+            node.style.height = `${EXPANDED_CIRCLE_WIDTH}px`
+            node.style.width = `${EXPANDED_CIRCLE_WIDTH}px`
+            node.querySelector("img").style.opacity = 1
+        }
+
+        const removeImage = node => {
+            node.querySelector("img").style.opacity = 0
+            node.style.height = `${CIRCLEWIDTH}px`
+            node.style.width = `${CIRCLEWIDTH}px`
+            node.querySelector("img").addEventListener(TRANSITION_ENDS_EVENT, () => {
+                if (node.querySelector("img")) {
+                    node.removeChild(node.querySelector("img"))
+                }
+            })
+        }
+
+        clickable.addEventListener("click", () => {
+            if (clickable.querySelector("img")) {
+                removeImage(clickable)
+                startNode(clickable)
+            } else {
+                stopNode(clickable)
+                showImage(clickable)
+            }
+        })
+        newPosition(clickable)
+    </script>
+</body>
+</html>
