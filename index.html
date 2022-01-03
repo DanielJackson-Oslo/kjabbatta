@@ -101,8 +101,6 @@
 
 
         const board = document.getElementById("board")
-        const clickable = document.createElement("DIV")
-        clickable.classList.add("clickable")
         const ciabatta = document.createElement("img")
         ciabatta.src = "ciabatta.jpg"
         const kjabba = document.createElement("img")
@@ -116,15 +114,15 @@
                 node.removeChild(node.firstChild);
             }
             if (terning > 0.4) {
-                node.appendChild(ciabatta)
+                node.appendChild(ciabatta.cloneNode())
             } else if (terning < 0.3)  {
-                node.appendChild(kjabba)
+                node.appendChild(kjabba.cloneNode())
             } else {
-                node.appendChild(kjabbatta)
+                node.appendChild(kjabbatta.cloneNode())
             }
         }
 
-        board.appendChild(clickable)
+
 
         const newPosition = (node) => {
             const boardBounds = board.getBoundingClientRect()
@@ -137,18 +135,18 @@
             
         }
 
-        const moveClickable = () => {
-            newPosition(clickable)
-        } 
-        clickable.addEventListener(TRANSITION_ENDS_EVENT, moveClickable)
+
+        const moveThis = (event) => {
+            newPosition(event.target)
+        }
 
         const stopNode = (node) => {
-            node.removeEventListener(TRANSITION_ENDS_EVENT, moveClickable)
+            node.removeEventListener(TRANSITION_ENDS_EVENT, moveThis)
             node.style.transform = getComputedStyle(node).transform
         }
         
         const startNode = (node) => {
-            clickable.addEventListener(TRANSITION_ENDS_EVENT, moveClickable)
+            node.addEventListener(TRANSITION_ENDS_EVENT, moveThis)
             newPosition(node)
         }
 
@@ -170,16 +168,24 @@
             })
         }
 
-        clickable.addEventListener("click", () => {
-            if (clickable.querySelector("img")) {
-                removeImage(clickable)
-                startNode(clickable)
-            } else {
-                stopNode(clickable)
-                showImage(clickable)
-            }
-        })
-        newPosition(clickable)
+        const makeClickable = (node) => {
+            node.addEventListener("click", () => {
+                if (node.querySelector("img")) {
+                    removeImage(node)
+                    startNode(node)
+                } else {
+                    stopNode(node)
+                    showImage(node)
+                }
+            })
+            startNode(node)
+        }
+
+        const clickable = document.createElement("DIV")
+        clickable.classList.add("clickable")
+        board.appendChild(clickable)
+        makeClickable(clickable)
+
     </script>
 </body>
 </html>
